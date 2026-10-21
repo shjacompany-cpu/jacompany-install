@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="no-referrer" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:" />
+<meta name="robots" content="noindex" />
+<title>중앙계열사 통합보고시스템 — 앱 설치</title>
+<!--
+  앱 설치 페이지(v2.73) — GitHub Pages 에 두는 정적 페이지 한 장. 공인 https 라 새 폰 브라우저가 경고 없이 연다.
+
+  문자 QR 의 주소:  https://<이 페이지>/?apk=<공개 저장소의 시작판 APK>#JACOMPANY:ENROLL:<설치표>:<서버>
+    [설치하기] = # 뒤를 이 폰의 클립보드에 담고 → 시작판 APK 를 받는다.
+    시작판은 처음 켜질 때 클립보드에서 그것을 읽어 폰 잠금(지문 · PIN)으로 본인을 확인하고 등록한다.
+
+  # 뒤는 브라우저 밖으로 나가지 않는다 — GitHub 서버에도, 어디에도 보내지 않는다. 바깥 파일 · 분석 도구를
+  싣지 않는다(CSP). 원본은 프로젝트의 안드로이드 앱/설치페이지 — 고치면 GitHub 저장소에 다시 올린다.
+-->
+<style>
+  :root { --c: #1e5bd7; --ink: #0f172a; --muted: #5b6475; --line: #e2e8f0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef2f8; color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; }
+  header { background: var(--c); color: #fff; padding: 22px 20px 26px; }
+  header b { display: block; font-size: 20px; }
+  header span { font-size: 13px; opacity: .85; }
+  main { max-width: 480px; margin: -14px auto 0; padding: 0 16px 32px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-top: 12px; }
+  ol { margin: 0; padding-left: 20px; line-height: 1.7; font-size: 15px; }
+  .btn { display: block; width: 100%; margin-top: 16px; padding: 16px; border: 0; border-radius: 12px; background: var(--c); color: #fff;
+    font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .btn:disabled { opacity: .45; }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 12px 0 0; }
+  .err { color: #b42318; }
+</style>
+</head>
+<body>
+<header><b>중앙계열사 통합보고시스템</b><span>회사 앱 설치</span></header>
+<main>
+  <div class="card">
+    <ol>
+      <li>아래 <b>[설치하기]</b> 를 누릅니다.</li>
+      <li>내려받은 파일을 열어 설치합니다.</li>
+      <li>앱을 열고 <b>지문이나 화면 잠금</b>으로 확인하면 등록이 끝납니다.</li>
+    </ol>
+    <button type="button" class="btn" id="go">설치하기</button>
+    <p class="hint" id="msg"></p>
+  </div>
+  <p class="hint">설치가 막히면 [설정 › 보안 및 개인정보 보호 › 보안 위험 자동 차단] 을 잠시 끄고 설치한 뒤 다시 켜 주세요.
+    이 링크는 문자를 받은 본인에게만 쓸 수 있습니다.</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  var 속 = "";
+  try { 속 = decodeURIComponent((location.hash || "").slice(1)); } catch (e) { 속 = (location.hash || "").slice(1); }
+  var apk = new URLSearchParams(location.search).get("apk") || "";
+  var 단추 = document.getElementById("go"), 말 = document.getElementById("msg");
+  var 맞나 = /^JACOMPANY:ENROLL:[A-Za-z0-9_-]+:\S+$/.test(속) && /^https:\/\//.test(apk);
+  if (!맞나) {
+    단추.disabled = true;
+    말.className = "hint err";
+    말.textContent = "문자로 받은 QR 그림의 링크로 열어 주세요.";
+    return;
+  }
+  // 클립보드 담기 — 단추를 누를 때만 된다(브라우저 규칙). 안 되면 옛 방식으로 한 번 더
+  function 담기() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(속).then(function () { return true; }, 옛담기);
+    }
+    return Promise.resolve(옛담기());
+  }
+  function 옛담기() {
+    var t = document.createElement("textarea");
+    t.value = 속; t.setAttribute("readonly", ""); t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select();
+    var 됐나 = false;
+    try { 됐나 = document.execCommand("copy"); } catch (e) { 됐나 = false; }
+    t.remove();
+    return 됐나;
+  }
+  단추.onclick = function () {
+    담기().then(function (됐나) {
+      말.className = "hint";
+      말.textContent = 됐나 ? "설치 파일을 받습니다. 받은 파일을 열어 설치해 주세요."
+        : "등록 정보를 담지 못했습니다. 설치한 뒤 앱에서 [QR 그림 고르기] 로 문자의 QR 그림을 골라 주세요.";
+      location.href = apk;
+    });
+  };
+})();
+</script>
+</body>
+</html>
